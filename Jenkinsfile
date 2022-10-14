@@ -1,7 +1,5 @@
 pipeline {
-    agent {
-        label 'windows'
-    }
+    agent any
     
     tools {
         // Install the Maven version configured as "M3" and add it to the  path.
@@ -20,10 +18,10 @@ pipeline {
         stage('Build') {
             steps {
                 // Run Maven on a Unix agent.
-                // sh "mvn -Dmaven.test.failure.ignore=true -f api-gateway clean package"
+                sh "mvn -Dmaven.test.failure.ignore=true -f api-gateway clean package"
 
                 // To run Maven on a Windows agent, use
-                bat "mvn -Dmaven.test.failure.ignore=true -f api-gateway clean package"
+                // bat "mvn -Dmaven.test.failure.ignore=true -f api-gateway clean package"
             }
 
             post {
@@ -35,6 +33,21 @@ pipeline {
                 }
             }
         }
+        
+    stage('pulltestingcode') {
+      steps {
+        git branch: 'main', credentialsId: 'GitHub', url: 'git@github.com:manjunathgd/functional-testing.git'
+      }
     }
+    stage('execute test') {
+      steps {
+        sh "mvn clean test"
+      }
+         post {
+              success {
+                   publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'TestReport', reportFiles: 'TestReport.html', reportName: 'FunctionalTestReport', reportTitles: '', useWrapperFileDirectly: true])
+              }
+         }
+    }
+  }
 }
-
